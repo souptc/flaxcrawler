@@ -1,0 +1,5 @@
+#summary Example of configuring and running flaxcrawler
+
+== Example ==
+
+TODO: Add code
