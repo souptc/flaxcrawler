@@ -2,4 +2,136 @@
 
 == Example ==
 
-TODO: Add code
+{{{
+package ru.flax.crawler.examples;
+
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import ru.flax.crawler.CrawlerConfiguration;
+import ru.flax.crawler.CrawlerController;
+import ru.flax.crawler.CrawlerException;
+import ru.flax.crawler.DefaultCrawler;
+import ru.flax.crawler.download.DefaultDownloader;
+import ru.flax.crawler.download.DefaultDownloaderController;
+import ru.flax.crawler.download.DefaultProxyController;
+import ru.flax.crawler.download.ProxyController;
+import ru.flax.crawler.model.CrawlerTask;
+import ru.flax.crawler.model.Page;
+import ru.flax.crawler.parse.DefaultParser;
+import ru.flax.crawler.parse.DefaultParserController;
+import ru.flax.crawler.parse.ParserController;
+
+/**
+ *
+ * @author ameshkov
+ */
+public class FullConfigurationExample {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) throws MalformedURLException, CrawlerException {
+        List<Proxy> proxies = new ArrayList<Proxy>();
+        proxies.add(Proxy.NO_PROXY);
+        // Creating an instance of proxy controller
+        DefaultProxyController proxyController = new DefaultProxyController(proxies);
+
+        // Creaing an instance of generic downloader
+        DefaultDownloader genericDownloader = new DefaultDownloader();
+        // Setting allowed content types
+        genericDownloader.setAllowedContentTypes(new String[]{"text/html", "text/plain"});
+        // Setting maximum content length
+        genericDownloader.setMaxContentLength(500000);
+        // Setting tries count
+        genericDownloader.setTriesCount(3);
+        // Setting proxy controller for this downloader
+        genericDownloader.setProxyController(proxyController);
+
+        // Creating an instance of custom downloader
+        DefaultDownloader customDownloader = new DefaultDownloader();
+        // Setting allowed content types to "null" - all content types are allowed for this downloader
+        customDownloader.setAllowedContentTypes(null);
+        // Setting maximum content length to 0 - unlimited
+        customDownloader.setMaxContentLength(0);
+        // Setting tries count to 0 - unlimited
+        customDownloader.setTriesCount(0);
+
+        // Creating downloader controller
+        DefaultDownloaderController downloaderController = new DefaultDownloaderController();
+        // Setting generic downloader
+        downloaderController.setGenericDownloader(genericDownloader);
+        // Setting custom downloaders for domains "google.com" and "wikipedia.com"
+        downloaderController.addCustomDownloader("google.com", customDownloader);
+        downloaderController.addCustomDownloader("wikipedia.org", customDownloader);
+
+        // Creating parser controller
+        DefaultParserController defaultParserController = new DefaultParserController();
+        // Setting generic parser class
+        defaultParserController.setGenericParser(DefaultParser.class);
+        // Setting custom parser classes for domains "google.com" and "wikipedia.com"
+        defaultParserController.addCustomParser("google.com", CustomParser.class);
+        defaultParserController.addCustomParser("wikipedia.org", CustomParser.class);
+
+        // Creating crawler configuration
+        CrawlerConfiguration configuration = new CrawlerConfiguration();
+        // Setting errors limit
+        configuration.setMaxHttpErrors(HttpURLConnection.HTTP_BAD_GATEWAY, 10);
+        // Setting maximum crawling depth level
+        configuration.setMaxLevel(10);
+        // Setting maximum parallel requests to a single domain limit
+        configuration.setMaxParallelRequests(5);
+        // Setting politeness period
+        configuration.setPolitenessPeriod(0);
+        // Adding crawler
+        for (int i = 0; i < 5; i++) {
+            // Creating crawler object
+            ExampleCrawler crawler = new ExampleCrawler();
+            crawler.setDownloaderController(downloaderController);
+            crawler.setParserController(defaultParserController);
+            configuration.addCrawler(crawler);
+        }
+
+        // Creating crawler controller
+        CrawlerController crawlerController = new CrawlerController(configuration);
+        crawlerController.addSeed(new URL("http://google.com/"));
+        crawlerController.addSeed(new URL("http://wikipedia.org/"));
+        // Starting and joining crawler
+        crawlerController.start();
+        crawlerController.join();
+    }
+
+    /**
+     * Custom parser class
+     */
+    private static class CustomParser extends DefaultParser {
+
+        @Override
+        public void parse(Page page) {
+            super.parse(page);
+            System.out.println("Inside custom parser");
+        }
+    }
+
+    /**
+     * Test crawler
+     */
+    private static class ExampleCrawler extends DefaultCrawler {
+
+        @Override
+        protected void beforeCrawl(CrawlerTask crawlerTask) {
+            super.beforeCrawl(crawlerTask);
+            System.out.println("Before crawling");
+        }
+
+        @Override
+        protected void afterCrawl(CrawlerTask crawlerTask, Page page) {
+            super.afterCrawl(crawlerTask, page);
+            System.out.println("After crawling");
+        }
+    }
+}
+}}}
