@@ -1,5 +1,1 @@
-#DefaultCrawler
-
-= Introduction =
-
 Default crawler implementation. You should extend this class to customize crawler behaviour.
