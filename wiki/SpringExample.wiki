@@ -1,0 +1,1 @@
+#summary Example of using flaxcrawler with spring
