@@ -2,6 +2,17 @@
 
 == Example ==
 
+=== Proxy controller ===
+Proxy controller manages proxy list and balances proxies during web pages crawling. You can implement your own proxy controller instead of default version. 
+
+{{{
+        List<Proxy> proxies = new ArrayList<Proxy>();
+        proxies.add(Proxy.NO_PROXY);
+        // ... add your proxies ...
+        // Creating an instance of proxy controller
+        DefaultProxyController proxyController = new DefaultProxyController(proxies);
+}}}
+
 {{{
 package ru.flax.crawler.examples;
 
