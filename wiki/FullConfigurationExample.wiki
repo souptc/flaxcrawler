@@ -84,8 +84,72 @@ Example of the custom parser class:
     }
 }}}
 
+=== !CrawlerConfiguration ===
+Crawler configuration contains a set of properties controlling crawler's work:
+ * maxHttpErrors - you can limit http errors count by domain. If this limit is violated for some site - crawler stop processing URLs of this site. By default no limits are set.
+ * maxLevel - maximum crawling depth level. By default set to "0" - unlimited.
+ * maxParallelRequests - maximum number of the parallel requests to a single site. By default set to "0" - unlimited
+ * politenessPeriod - minimum period between two requests to a single site. By default "0" - no period.
+
+{{{
+        // Creating crawler configuration
+        CrawlerConfiguration configuration = new CrawlerConfiguration();
+        // Setting errors limit
+        configuration.setMaxHttpErrors(HttpURLConnection.HTTP_BAD_GATEWAY, 10);
+        // Setting maximum crawling depth level
+        configuration.setMaxLevel(10);
+        // Setting maximum parallel requests to a single domain limit
+        configuration.setMaxParallelRequests(5);
+        // Setting politeness period
+        configuration.setPolitenessPeriod(0);
+}}}
+
+=== !DomainConstraints ===
+You can override crawler constraints for chosen domains.
+
+{{{
+        // Creating specific constraints for google.com and wikipedia.org
+        DomainConstraints domainConstraints = new DomainConstraints();
+        // Maximum crawling depth level
+        domainConstraints.setMaxLevel(100);
+        // Maximum parallel requests count
+        domainConstraints.setMaxParallelRequests(1);
+        // Politeness period
+        domainConstraints.setPolitenessPeriod(500);
+        // Adding specific domain constraints to the crawler configuration
+        configuration.setDomainConstraints("google.com", domainConstraints);
+        configuration.setDomainConstraints("wikipedia.org", domainConstraints);
+}}}
+
+=== Setting crawlers ===
+Before crawling you should add desirable number of crawlers to your configuration. Default crawler implementation must be populated with !DownloaderController and !ParserController before start.
+
+{{{
+        // Adding crawlers
+        for (int i = 0; i < 5; i++) {
+            // Creating crawler object
+            ExampleCrawler crawler = new ExampleCrawler();
+            crawler.setDownloaderController(downloaderController);
+            crawler.setParserController(defaultParserController);
+            configuration.addCrawler(crawler);
+        }
+}}}
+
+=== !CrawlerController ===
+Default crawler controller manages crawling process, starts and stops, etc..
+
+{{{
+        // Creating crawler controller
+        CrawlerController crawlerController = new CrawlerController(configuration);
+        crawlerController.addSeed(new URL("http://google.com/"));
+        crawlerController.addSeed(new URL("http://wikipedia.org/"));
+        // Starting and joining crawler
+        crawlerController.start();
+        crawlerController.join();
+}}}
 
 
+=== Full source code ===
 {{{
 package com.googlecode.flaxcrawler.examples;
 
@@ -208,6 +272,8 @@ public class FullConfigurationExample {
 
         @Override
         public void parse(Page page) {
+            // Calls for super method that extracts links and title and populates
+            // page.links and page.title properties
             super.parse(page);
             System.out.println("Inside custom parser");
         }
