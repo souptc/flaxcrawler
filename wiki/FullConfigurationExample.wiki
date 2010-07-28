@@ -15,7 +15,7 @@ Proxy controller manages proxy list and balances proxies during web pages crawli
 
 === Downloaders ===
 It downloads content from the specified URL and returns it as a Page object. This object contains a response code, content and some other essential data. You can implement your own Downloaders or use default implementation. Default downloaders supports usage of the proxy controller. Also you can control it changing three properties:
- * allowedContentTypes - array of supported content types. If <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html">HEAD-request</a> to the web page returns other type - "null" is returned instead of "Page" object. Default value is "text/html" only.
+ * allowedContentTypes - array of supported content types. If <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html" target="_blank">HEAD-request</a> to the web page returns other type - "null" is returned instead of "Page" object. Default value is "text/html" only.
  * maxContentLength - maximum content length allowed for this downloader. Downloader checks "Content-Length" header of the "HEAD" response. If this constraint is violated - it returns "null". Default value is "0" - unlimited content length.
  * triesCount - downloader tries to download web page this number of times if response code is not HTTP_OK or some of redirect codes
 
@@ -40,6 +40,23 @@ It downloads content from the specified URL and returns it as a Page object. Thi
         // Setting tries count to 0 - unlimited
         customDownloader.setTriesCount(0);
 }}}
+
+=== !DownloaderController ===
+!DownloaderController manages downloaders. Interface consists of a single method - "Downloader getDownloader(URL url)". Default implementation supports setting a "generic" downloader that will be used for any URL and any number of "custom" downloaders that will be used only for URLs with specific domains.
+
+{{{
+        // Creating downloader controller
+        DefaultDownloaderController downloaderController = new DefaultDownloaderController();
+        // You can avoid setting generic downloader - default downloader will be used
+        // Setting generic downloader
+        downloaderController.setGenericDownloader(genericDownloader);
+        // Setting custom downloaders for domains "google.com" and "wikipedia.com"
+        downloaderController.addCustomDownloader("google.com", customDownloader);
+        downloaderController.addCustomDownloader("wikipedia.org", customDownloader);
+}}}
+
+=== ===
+
 
 {{{
 package ru.flax.crawler.examples;
