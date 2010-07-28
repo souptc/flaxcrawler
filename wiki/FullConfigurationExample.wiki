@@ -55,7 +55,35 @@ It downloads content from the specified URL and returns it as a Page object. Thi
         downloaderController.addCustomDownloader("wikipedia.org", customDownloader);
 }}}
 
-=== ===
+=== Parser and !ParserController ===
+By default parser extracts links and page title. But you can implement your own parser implementation or use !ParserCallbacks to extend !DefaultParser behaviour. Also you can set "custom" parsers to be used with chosen domains. *Be aware that extracting links and setting "links" property of the "Page" object is essential for crawler to continue working.*
+
+{{{
+        // Creating parser controller
+        DefaultParserController defaultParserController = new DefaultParserController();
+        // Setting generic parser class
+        defaultParserController.setGenericParser(DefaultParser.class);
+        // Setting custom parser classes for domains "google.com" and "wikipedia.com"
+        defaultParserController.addCustomParser("google.com", CustomParser.class);
+        defaultParserController.addCustomParser("wikipedia.org", CustomParser.class);
+}}}
+Example of the custom parser class:
+{{{
+    /**
+     * Custom parser class
+     */
+    private static class CustomParser extends DefaultParser {
+
+        @Override
+        public void parse(Page page) {
+            // Calls for super method that extracts links and title and populates
+            // page.links and page.title properties
+            super.parse(page);
+            System.out.println("Inside custom parser");
+        }
+    }
+}}}
+
 
 
 {{{
