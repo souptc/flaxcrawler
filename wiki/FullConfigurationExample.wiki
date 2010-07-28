@@ -59,7 +59,7 @@ It downloads content from the specified URL and returns it as a Page object. Thi
 
 
 {{{
-package ru.flax.crawler.examples;
+package com.googlecode.flaxcrawler.examples;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -67,19 +67,18 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import ru.flax.crawler.CrawlerConfiguration;
-import ru.flax.crawler.CrawlerController;
-import ru.flax.crawler.CrawlerException;
-import ru.flax.crawler.DefaultCrawler;
-import ru.flax.crawler.download.DefaultDownloader;
-import ru.flax.crawler.download.DefaultDownloaderController;
-import ru.flax.crawler.download.DefaultProxyController;
-import ru.flax.crawler.download.ProxyController;
-import ru.flax.crawler.model.CrawlerTask;
-import ru.flax.crawler.model.Page;
-import ru.flax.crawler.parse.DefaultParser;
-import ru.flax.crawler.parse.DefaultParserController;
-import ru.flax.crawler.parse.ParserController;
+import com.googlecode.flaxcrawler.CrawlerConfiguration;
+import com.googlecode.flaxcrawler.CrawlerController;
+import com.googlecode.flaxcrawler.CrawlerException;
+import com.googlecode.flaxcrawler.DefaultCrawler;
+import com.googlecode.flaxcrawler.DomainConstraints;
+import com.googlecode.flaxcrawler.download.DefaultDownloader;
+import com.googlecode.flaxcrawler.download.DefaultDownloaderController;
+import com.googlecode.flaxcrawler.download.DefaultProxyController;
+import com.googlecode.flaxcrawler.model.CrawlerTask;
+import com.googlecode.flaxcrawler.model.Page;
+import com.googlecode.flaxcrawler.parse.DefaultParser;
+import com.googlecode.flaxcrawler.parse.DefaultParserController;
 
 /**
  *
@@ -142,6 +141,20 @@ public class FullConfigurationExample {
         configuration.setMaxParallelRequests(5);
         // Setting politeness period
         configuration.setPolitenessPeriod(0);
+
+        // Creating specific constraints for google.com and wikipedia.org
+        DomainConstraints domainConstraints = new DomainConstraints();
+        // Maximum crawling depth level
+        domainConstraints.setMaxLevel(100);
+        // Maximum parallel requests count
+        domainConstraints.setMaxParallelRequests(1);
+        // Politeness period
+        domainConstraints.setPolitenessPeriod(500);
+        // Adding specific domain constraints to the crawler configuration
+        configuration.setDomainConstraints("google.com", domainConstraints);
+        configuration.setDomainConstraints("wikipedia.org", domainConstraints);
+
+
         // Adding crawler
         for (int i = 0; i < 5; i++) {
             // Creating crawler object
@@ -177,16 +190,48 @@ public class FullConfigurationExample {
      */
     private static class ExampleCrawler extends DefaultCrawler {
 
+        /**
+         * This method is called before each crawl attempt.
+         * @param crawlerTask
+         */
         @Override
         protected void beforeCrawl(CrawlerTask crawlerTask) {
             super.beforeCrawl(crawlerTask);
             System.out.println("Before crawling");
         }
 
+        /**
+         * This method is called after each crawl attempt.
+         * Warning - it does not matter if it was unsuccessfull attempt or response was redirected.
+         * So you should check response code before handling it.
+         * @param crawlerTask
+         * @param page
+         */
         @Override
         protected void afterCrawl(CrawlerTask crawlerTask, Page page) {
             super.afterCrawl(crawlerTask, page);
-            System.out.println("After crawling");
+
+            if (page == null) {
+                System.out.println(crawlerTask.getUrl() + " violates crawler constraints (content-type or content-length or other)");
+            } else if (page.getResponseCode() >= 300 && page.getResponseCode() < 400) {
+                // If response is redirected - crawler schedulles new task with new url
+                System.out.println("Response was redirected from " + crawlerTask.getUrl());
+            } else if (page.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                // Printing url crawled
+                System.out.println(crawlerTask.getUrl() + ". Found " + (page.getLinks() != null ? page.getLinks().size() : 0) + " links.");
+            }
+        }
+
+        /**
+         * You may check if you want to crawl next task
+         * @param crawlerTask Task that is going to be crawled if you return {@code true}
+         * @param parent parent.getUrl() page contain link to a crawlerTask.getUrl() or redirects to it
+         * @return
+         */
+        @Override
+        public boolean shouldCrawl(CrawlerTask crawlerTask, CrawlerTask parent) {
+            // Default implementation returns true if crawlerTask.getDomainName() == parent.getDomainName()
+            return super.shouldCrawl(crawlerTask, parent);
         }
     }
 }
