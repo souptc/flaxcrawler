@@ -1,0 +1,4 @@
+#summary Development plans
+
+ # Create a set of unit-tests, covering important components
+ # Crawler should respect robots.txt
